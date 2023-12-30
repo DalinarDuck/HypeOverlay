@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <title>HYPE!!!</title>
+    <style>
+      canvas {
+        border: 0px solid #000;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+    <script>
+      const socket = io();
+      let cnt = 0;
+      const canvas = document.getElementById('gameCanvas');
+      const context = canvas.getContext('2d');
+      const characterSprites = {};
+      const characterSpritesData = {};
+      let characters = {};
+      let currentFrame = 0;
+      let characterFrame = 0;
+      var holdingImg = new Image();
+      holdingImg.src = 'sprites/default_sprite.png';
+      canvas.width = 1920;
+      canvas.height = 1080;
+
+      function preloadSprites(character) {
+        if (!characterSprites.hasOwnProperty(character.spriteName)) {
+          const characterSprite = new Image();
+          characterSprite.src = character.sprite;
+          characterSprite.onerror = function() {
+            drawCharacters();
+          };
+          characterSprite.onload = function() {
+            characterSprites[character.spriteName] = characterSprite;
+            characterSpritesData[character.spriteName] = characterSprite;
+            drawCharacters();
+          };
+        } else {
+          drawCharacters();
+        }
+      }
+
+      function drawCharacters() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        for (const characterId in characters) {
+          const character = characters[characterId];
+          const isMovingLeft = character.direction === -1;
+          const spriteOrColor = characterSprites[character.spriteName] || holdingImg;
+          const spriteWidth = spriteOrColor.width / character.frameCount;
+          let spriteX = spriteWidth * character.currentFrame;
+          if (isMovingLeft) {
+            context.save();
+            context.scale(-1, 1);
+            const flippedX = -character.x - character.width;
+            context.drawImage(spriteOrColor, spriteX, 0, spriteWidth, spriteOrColor.height, flippedX, character.y, character.width, character.height);
+            context.restore();
+          } else {
+            context.drawImage(spriteOrColor, spriteX, 0, spriteWidth, spriteOrColor.height, character.x, character.y, character.width, character.height);
+          }
+          if (Object.keys(characters).length < 40) {
+            context.fillStyle = 'white';
+            context.font = '18px Arial';
+            context.strokeStyle = 'black';
+            context.lineWidth = 4;
+            let health = Math.round(((character.life / character.totalLife) + Number.EPSILON) * 100)
+            const textWidth = context.measureText(character.name).width;
+            const textX = character.x + (character.width - textWidth) / 2;
+            const textY = character.y - 5;
+            context.strokeText(character.name, textX, textY);
+            context.fillText(character.name, textX, textY);
+            draw_healthbar((character.x + (character.width / 2)), textY - 30, health, 100, 10)
+          }
+        }
+      }
+
+      function draw_healthbar(x, y, per, width, thickness) {
+        context.beginPath();
+        context.rect(x - width / 2, y, width * (per / 100), thickness);
+        if (per > 90) {
+          context.fillStyle = "#00ff00"
+        } else if (per > 80) {
+          context.fillStyle = "#6fed00"
+        } else if (per > 70) {
+          context.fillStyle = "#98db00"
+        } else if (per > 60) {
+          context.fillStyle = "#b6c700"
+        } else if (per > 50) {
+          context.fillStyle = "#cdb200"
+        } else if (per > 40) {
+          context.fillStyle = "#df9b00"
+        } else if (per > 30) {
+          context.fillStyle = "#ee8200"
+        } else if (per > 20) {
+          context.fillStyle = "#f86600"
+        } else if (per > 10) {
+          context.fillStyle = "#fe4400"
+        } else {
+          context.fillStyle = "#ff0000"
+        }
+        context.closePath();
+        context.fill();
+      }
+      socket.on('updateCharacters', (updatedCharacters) => {
+        characters = updatedCharacters;
+        for (const characterId in characters) {
+          preloadSprites(characters[characterId]);
+        }
+        drawCharacters();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Space') {
+          socket.emit('jumpCharacter');
+        }
+      });
+    </script>
+  </body>
+</html>

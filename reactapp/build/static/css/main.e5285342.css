@@ -1,0 +1,1 @@
+body{display:flex;justify-content:center}ul{list-style-type:none;padding:0}li{border:1px solid;margin:10px 0;padding:10px}.experience_filter{display:flex;gap:6px;margin:10px 0}.experience_filter button{background-color:#fff;border:1px solid;border-radius:4px;cursor:pointer;padding:4px}.experience_filter button.selected{background-color:wheat}
