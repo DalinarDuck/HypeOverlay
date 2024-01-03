@@ -110,7 +110,34 @@ function getSprite(spritePicked, userRoles) {
 				default:
 					return spriteList.shyguy_red;
 			}
-		} else { //not shell... or shyguy
+		} else if (spritePicked === 'yoshi') {
+			let yoshiRand = Math.floor(Math.random() * 8);
+			switch (yoshiRand) {
+				case 0:
+					return spriteList.yoshiblue;
+					break;
+				case 1:
+					return spriteList.yoshigreen;
+					break;
+				case 2:
+					return spriteList.yoshilightblue;
+					break;
+				case 3:
+					return spriteList.yoshiorange;
+					break;
+				case 4:
+					return spriteList.yoshipurple;
+					break;
+				case 5:
+					return spriteList.yoshired;
+					break;
+				case 6:
+					return spriteList.yoshiteal;
+					break;
+				default:
+					return spriteList.yoshiyellow;
+			}
+		} else {			//not shell... or shyguy
 			return spriteList[spritePicked] || spriteList['default'];
 		}
 	}
@@ -126,13 +153,8 @@ function httpsWorker(glx) {
 
     const dotenv = require('dotenv');
     dotenv.config();
-    const SECRET = process.env.SECRET; //524746755a326c73
-    //const port = process.env.PORT || 3000;
-    //const ipAddress = process.env.IP_ADDRESS || 'localhost';
-    const app = express();
-    //const server = http.createServer(app);
-    //const io = socketIO(server);
-
+    const SECRET = process.env.SECRET;
+	const app = express();
     app.use(express.static(path.join(__dirname, 'public')));
 
 
@@ -149,6 +171,7 @@ function httpsWorker(glx) {
             res.status(400).send(`NOT ALLOWED`)
         } else {
             if (started) {
+				var trueX = canvasWidth/2;
                 const newCharacterId = Date.now().toString();
                 let roles = '';
                 let holdingroles = '';
@@ -188,7 +211,7 @@ function httpsWorker(glx) {
                             const charSpeed = (Math.random() * 4) + 2
                             const characterSprite = getSprite(req.query.sprite, roles);
                             characters[characterId] = {
-                                x: characters[characterId].x,
+                                x: ((characters[characterId].x > 1700) ? (canvasWidth/2) : ((characters[characterId].x < 300) ? (canvasWidth/2) : characters[characterId].x)),
                                 y: characters[characterId].y,
                                 direction: characters[characterId].direction,
                                 speed: charSpeed,
@@ -226,7 +249,7 @@ function httpsWorker(glx) {
         }
     });
 
-    app.get('/updateSprite', (req, res) => {
+/*     app.get('/updateSprite', (req, res) => {
         if (req.query.secret !== SECRET) {
             res.status(400).send(`NOT ALLOWED`)
         } else {
@@ -263,7 +286,7 @@ function httpsWorker(glx) {
             io.emit('updateCharacters', characters);
             res.send('sprite updated');
         }
-    });
+    }); */
 
     app.get('/end', (req, res) => {
         if (req.query.secret !== SECRET) {
