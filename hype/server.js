@@ -496,11 +496,6 @@ function httpsWorker(glx) {
 				console.log('for missile')
 				console.log('for missile')
 				console.log('for missile')
-				console.log('for missile')
-				console.log('for missile')
-				console.log('for missile')
-				console.log('for missile')
-				console.log('for missile')
 				
 			}, 40*1000)
 		}
