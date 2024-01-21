@@ -3,10 +3,6 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
     <title>HYPE!!!</title>
@@ -22,15 +18,17 @@
     <canvas id="gameCanvas"></canvas>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
     <script>
-      const socket = io();
-      let cnt = 0;
+      const socket = io('/hype');
+      var cnt = 0;
       const canvas = document.getElementById('gameCanvas');
       const context = canvas.getContext('2d');
+	  
       const characterSprites = {};
       const characterSpritesData = {};
-      let characters = {};
-      let currentFrame = 0;
-      let characterFrame = 0;
+	  var fadeInterval
+      var characters = {};
+      var currentFrame = 0;
+      var characterFrame = 0;
       var holdingImg = new Image();
       holdingImg.src = 'sprites/default_sprite.png';
       canvas.width = 1920;
@@ -53,14 +51,35 @@
         }
       }
 
+    function fade() {
+        const duration = 15000;
+        const interval = 30;
+        const steps = duration / interval;
+        const alphaDecrement = 1.0 / steps;
+        fadeInterval = setInterval(() => {
+			console.log(context.globalAlpha)
+            context.globalAlpha -= alphaDecrement;
+            if (context.globalAlpha <= alphaDecrement) {
+				console.log('end fade')
+                clearInterval(fadeInterval);
+				context.globalAlpha = 0.0;				
+				drawCharacters();
+            }
+        }, interval);
+    }
+
+
       function drawCharacters() {
         context.clearRect(0, 0, canvas.width, canvas.height);
+		context.font = '18px Arial';
+		context.strokeStyle = 'black';
+		context.lineWidth = 4;
         for (const characterId in characters) {
           const character = characters[characterId];
           const isMovingLeft = character.direction === -1;
           const spriteOrColor = characterSprites[character.spriteName] || holdingImg;
           const spriteWidth = spriteOrColor.width / character.frameCount;
-          let spriteX = spriteWidth * character.currentFrame;
+          var spriteX = spriteWidth * character.currentFrame;
           if (isMovingLeft) {
             context.save();
             context.scale(-1, 1);
@@ -72,16 +91,13 @@
           }
           if (Object.keys(characters).length < 40) {
             context.fillStyle = 'white';
-            context.font = '18px Arial';
-            context.strokeStyle = 'black';
-            context.lineWidth = 4;
-            let health = Math.round(((character.life / character.totalLife) + Number.EPSILON) * 100)
+            //let health = Math.round(((character.life / character.totalLife) + Number.EPSILON) * 100)
             const textWidth = context.measureText(character.name).width;
             const textX = character.x + (character.width - textWidth) / 2;
             const textY = character.y - 5;
             context.strokeText(character.name, textX, textY);
             context.fillText(character.name, textX, textY);
-            draw_healthbar((character.x + (character.width / 2)), textY - 30, health, 100, 10)
+            draw_healthbar((character.x + (character.width / 2)), textY - 30, character.health, 100, 10)
           }
         }
       }
@@ -120,10 +136,12 @@
         }
         drawCharacters();
       });
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Space') {
-          socket.emit('jumpCharacter');
-        }
+	  
+      socket.on('fadeAway', () => {
+        fade()
+      });
+      socket.on('start', () => {
+        context.globalAlpha = 1.0;	
       });
     </script>
   </body>
