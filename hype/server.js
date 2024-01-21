@@ -488,6 +488,7 @@ function httpsWorker(glx) {
 				characters = {};
 				fading = false;
 				hypeSocket.emit('updateCharacters', characters);
+				console.log('for missile')
 			}, 40*1000)
 		}
 	});
